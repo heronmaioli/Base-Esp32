@@ -4,8 +4,9 @@
 #include <NTPClient.h>
 
 WiFiUDP udp;
-NTPClient ntp(udp, "a.st1.ntp.br", -3 * 3600, 60000);
+NTPClient ntp(udp, "a.st1.ntp.br", -3 * 3600, 60000); 
 uint8_t chipid[6];
+char buffer[40];
 String hora;
 
 //Provide your own WiFi credentials
