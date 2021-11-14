@@ -1,20 +1,29 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClient.h>
 #include <ArduinoJson.h>
 #include <NTPClient.h>
 #include <SimpleDHT.h>
+#include <WebSocketsClient.h>
+
 
 WiFiUDP udp;
 NTPClient ntp(udp, "a.st1.ntp.br", -3 * 3600, 60000); 
+
 
 uint8_t chipid[6];
 const char * MAC_ID;
 char buffer[40]; 
 
 SimpleDHT22 dht;
+WebSocketsClient webSocket;
+
 
 String hora;
 
+char path[] = "/";
+char host[] = "192.168.0.12";
+	
 
 
 //Provide your own WiFi credentials
@@ -24,7 +33,7 @@ const char* password = "EFAFB9DA";
 #define LED 2 
 #define DHTPIN 26
 
-//____________________________________________________
+//___________________________________________________
 
 void bootCheck(const char * id) {
 
@@ -52,7 +61,7 @@ if ((WiFi.status() == WL_CONNECTED)) {
   }
  };
  
- //___________________________________________________
+//___________________________________________________
 
  void readSensors(const char * id) {
 
@@ -89,6 +98,8 @@ if ((WiFi.status() == WL_CONNECTED)) {
 
 //____________________________________________________
 
+
+
 void setup(void) {
   //For displaying the joke on Serial Monitor
   Serial.begin(9600);
@@ -105,7 +116,12 @@ void setup(void) {
     Serial.print(".");
   }
   Serial.print("WiFi connected with IP: ");
-  Serial.println(WiFi.localIP());
+  Serial.println(WiFi.localIP());  
+
+  delay(500);
+
+  
+  webSocket.begin("192.168.0.12", 8080, "/");
 
   ntp.begin();
   ntp.forceUpdate();   
@@ -115,13 +131,14 @@ void setup(void) {
     sprintf(buffer, "%02x%02x%02x%02x%02x%02x",chipid[0], chipid[1], chipid[2], chipid[3], chipid[4], chipid[5]);
     MAC_ID = buffer;
     delay(500);
-    bootCheck(MAC_ID);   
-   
+    bootCheck(MAC_ID);     
 }
  
  //___________________________________________________
 
 void loop() {  
+
+webSocket.loop();
   readSensors(MAC_ID);
   delay(2000);
 }
