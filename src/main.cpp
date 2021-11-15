@@ -23,16 +23,46 @@ String hora;
 
 char path[] = "/";
 char host[] = "192.168.0.12";
-	
+float temperature, humidity;
+
+
+unsigned long currentMillis;
+unsigned long sensorReadPrevMillis = 0;
+unsigned long sensorWsPrevMillis = 0;
 
 
 //Provide your own WiFi credentials
 const char* ssid = "CLARO_=(_8^(1)";
 const char* password = "EFAFB9DA";
 
+
+
 #define LED 2 
 #define DHTPIN 26
 
+
+void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
+
+	switch(type) {
+
+		case WStype_DISCONNECTED:    
+			Serial.printf("[WSc] Disconnected!\n");
+			break;
+		case WStype_CONNECTED: {
+			Serial.printf("[WSc] Connected to url: %s\n", payload);
+			// send message to server when Connected
+			webSocket.sendTXT("Connected");
+		}
+			break;
+		case WStype_TEXT:
+			Serial.printf("%s\n", payload);
+			// send message to server
+			webSocket.sendTXT("message here");
+			break;		
+  
+    }
+
+}
 //___________________________________________________
 
 void bootCheck(const char * id) {
@@ -63,47 +93,39 @@ if ((WiFi.status() == WL_CONNECTED)) {
  
 //___________________________________________________
 
- void readSensors(const char * id) {
+ void readSensors(const char * id) { 
 
-   float temperature, humidity;
-   dht.read2(DHTPIN, &temperature, &humidity, NULL);  
+    char jsonOutput[128];
+   unsigned  long socketInterval = 2000;   
+   unsigned  long readInterval = 20000;
 
-   char jsonOutput[128];
-  
+  if (currentMillis >= (sensorReadPrevMillis + readInterval)){
+    sensorReadPrevMillis = currentMillis;
+    dht.read2(DHTPIN, &temperature, &humidity, NULL);
+  } 
 
-
-   if ((WiFi.status() == WL_CONNECTED)) {
-    HTTPClient http;
-    http.begin("https://jsonplaceholder.typicode.com/posts/1");
-    http.addHeader("COntent-Type", "application/json");
+   if ((WiFi.status() == WL_CONNECTED) && currentMillis >= (sensorWsPrevMillis + socketInterval) ) {
+     sensorWsPrevMillis = currentMillis;     
 
     const size_t CAPACITY = JSON_OBJECT_SIZE(3);
     StaticJsonDocument<CAPACITY> doc;
-    JsonObject object = doc.to<JsonObject>();   
-    
+    JsonObject object = doc.to<JsonObject>();      
     object["boardId"] = id;
     object["temperature"] = temperature;
     object["humidity"] = humidity;
-
-    serializeJson(doc, jsonOutput);
-    int httpCode = http.PUT(String(jsonOutput));
-    if (httpCode > 0) {
-      String payload = http.getString();
-      Serial.println("\nStatuscode: " + String(httpCode));
-      Serial.println(payload);
-      http.end();
-    }
+    serializeJson(doc, jsonOutput); 
+    Serial.println(temperature);
+    Serial.println(humidity);
+    webSocket.sendTXT(jsonOutput);    
   }  
 }
 
 //____________________________________________________
 
-
-
 void setup(void) {
   //For displaying the joke on Serial Monitor
   Serial.begin(9600);
-  pinMode(LED,OUTPUT);
+  pinMode(DHTPIN,INPUT);
   
   //Initiate WiFi connection
   WiFi.mode(WIFI_STA);
@@ -119,18 +141,20 @@ void setup(void) {
   Serial.println(WiFi.localIP());  
 
   delay(500);
-
   
   webSocket.begin("192.168.0.12", 8080, "/");
+  webSocket.onEvent(webSocketEvent);
+  webSocket.setReconnectInterval(4000);
 
   ntp.begin();
   ntp.forceUpdate();   
     
-    esp_efuse_read_mac(chipid);
-    
+    esp_efuse_read_mac(chipid);    
     sprintf(buffer, "%02x%02x%02x%02x%02x%02x",chipid[0], chipid[1], chipid[2], chipid[3], chipid[4], chipid[5]);
     MAC_ID = buffer;
+
     delay(500);
+    
     bootCheck(MAC_ID);     
 }
  
@@ -138,7 +162,7 @@ void setup(void) {
 
 void loop() {  
 
-webSocket.loop();
+  webSocket.loop();
   readSensors(MAC_ID);
-  delay(2000);
+  currentMillis=millis();  
 }
