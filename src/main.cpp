@@ -30,7 +30,7 @@ unsigned long sensorReadPrevMillis = 0;
 unsigned long pingWsPrevMillis = 0;
 unsigned long lightPrevMillis = 0;
 
-   float temperature, humidity;
+float temperature, humidity;
 
 
 
@@ -40,16 +40,19 @@ const char* password = "EFAFB9DA";
 
 
 
-#define DHTPIN 26
-#define LEDPIN 2
+ #define DHTPIN 26
+ #define LEDPIN 14
+ #define VENTPIN 25
+ #define INEXPIN 33
+ #define OUTEXPIN 32
+ boolean lightLabel = false;
 
-
-  String highHour = "05:00:00";
-  String lowHour = "23:00:00";
-  const char* lightState = "AUTO";
-  boolean ventState = false;
-  boolean inExaust = false;
-  boolean outExaust = false;
+ String highHour = "05:00:00";
+ String lowHour = "22:54:00";
+ String lightState = "AUTO";
+ boolean ventState = false;
+ boolean inExaust = false;
+ boolean outExaust = false;
 
 
 
@@ -68,26 +71,63 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
       strcpy (str1,"CON:");
       strcpy (str2, MAC_ID);
       strncat (str1, str2, 15);
-      puts (str1);
-			// send message to server when Connected
+      puts (str1);			
 			webSocket.sendTXT(str1);
-		}
+		}    
 			break;
-		case WStype_TEXT:
+
+	  case WStype_TEXT:
+
 			Serial.printf("%s\n", payload);
-			// send message to server
-			webSocket.sendTXT("message here");
-			break;		
-  
+      String str = (char*)payload;
+
+      if (str == "LON") {
+        lightState = "ON";
+        digitalWrite(LEDPIN, 0);
+        lightLabel = true;
+      }
+      if (str == "LOF") {
+        lightState = "OFF";
+        digitalWrite(LEDPIN, 1);
+        lightLabel = false;
+      }
+      if (str == "LAU") {
+        lightState = "AUTO";
+      }			
+      if (str == "VON") {
+        ventState = true;
+        digitalWrite(VENTPIN, 1);
+      }
+      if (str == "VOF") {
+        ventState = false;
+        digitalWrite(VENTPIN, 0);
+      }
+      if (str == "ION") {
+        inExaust = true;
+        digitalWrite(INEXPIN, 1);
+      }
+      if (str == "IOF") {
+        inExaust = false;
+        digitalWrite(INEXPIN, 0);
+      }
+      if (str == "OON") {
+        outExaust = true;
+        digitalWrite(OUTEXPIN, 1);
+      }
+      if (str == "OOF") {
+        outExaust = false;
+        digitalWrite(OUTEXPIN, 0);
+      }
+    	break;	  
     }
 
 }
+
 //___________________________________________________
 
 void bootCheck() {
 
 char boardIdJSON[128];
-char pinStatusJSON[128];
 
 if ((WiFi.status() == WL_CONNECTED)) {
     HTTPClient http;
@@ -110,12 +150,12 @@ if ((WiFi.status() == WL_CONNECTED)) {
 
       DynamicJsonDocument doc1(1024);
       deserializeJson(doc1, payload);
-      // const char* highHour = doc1["highHour"];
-      // const char* lowHour   = doc1["lowHour"];
-      // boolean lightState   = doc1["lightState"];
-      boolean ventState    = doc1["ventState"];
-      boolean outExaust   = doc1["outExaust"];
-      boolean intExaust   = doc1["intExaust"];
+      // highHour = doc1["highHour"];
+      // lowHour   = doc1["lowHour"];
+      // lightState   = doc1["lightState"];
+      // ventState    = doc1["ventState"];
+      // outExaust   = doc1["outExaust"];
+      // intExaust   = doc1["intExaust"];
       http.end();
     }
   }
@@ -124,26 +164,38 @@ if ((WiFi.status() == WL_CONNECTED)) {
 //___________________________________________________
 
 void lightTimer() {
-unsigned  long lightTimer = 2000;
- if (currentMillis >= (lightPrevMillis + lightTimer)){
-    lightPrevMillis = currentMillis;
-  String nowTime = ntp.getFormattedTime();   
 
- if (nowTime >= highHour && nowTime <= lowHour && digitalRead(LEDPIN) != 1)  {
-    Serial.println("Turn ON");
-    digitalWrite(LEDPIN, HIGH);
+unsigned long lightInterval = 2000;
+
+ if (currentMillis >= (lightPrevMillis + lightInterval)){
+  lightPrevMillis = currentMillis;
+  String nowTime = ntp.getFormattedTime(); 
+
+
+ if (nowTime >= highHour && nowTime <= lowHour && lightLabel != true && lightState == "AUTO"){
+    Serial.println("Turn ON auto");
+    digitalWrite(LEDPIN, 0);
+    lightLabel = true;
  }
 
- if (nowTime >= lowHour && nowTime < "23:59:59" && now ) {
-    Serial.println("Turn OFF");
-   
+ if (nowTime >= lowHour && lightLabel != false && lightState == "AUTO") {
+    Serial.println("Turn OFF auto");
+    digitalWrite(LEDPIN, 1);   
+    lightLabel = false;
  }
 
- 
+if (lightState == "ON" && lightLabel != true){
+  Serial.println("Turn ON manual");
+  digitalWrite(LEDPIN, 0);
+  lightLabel = true;
+}
 
-
-
-};
+if (lightState == "OFF" && lightLabel != false){
+  Serial.println("Turn OFF manual");
+  digitalWrite(LEDPIN, 1);
+  lightLabel = false;
+}
+}};
 
 //___________________________________________________
 
@@ -178,6 +230,7 @@ unsigned  long lightTimer = 2000;
   }  
 }
  };
+
 //___________________________________________________
 
 void pingMessage() {
@@ -196,6 +249,9 @@ void setup(void) {
   Serial.begin(9600);
   pinMode(DHTPIN,INPUT);
   pinMode(LEDPIN,OUTPUT);
+  pinMode(VENTPIN,OUTPUT);
+  pinMode(INEXPIN,OUTPUT);
+  pinMode(OUTEXPIN,OUTPUT);
 
   
   //Initiate WiFi connection
