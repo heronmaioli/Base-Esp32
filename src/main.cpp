@@ -19,8 +19,6 @@ SimpleDHT22 dht;
 WebSocketsClient webSocket;
 
 
-String hora;
-
 char path[] = "/";
 char host[] = "192.168.0.12";
 
