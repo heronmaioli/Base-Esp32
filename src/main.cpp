@@ -21,8 +21,6 @@ unsigned long lightPrevMillis = 0;
 
 float temperature, humidity;
 
-#define LEDTESTE 2
-
 #define DHTPIN 26
 #define LEDPIN 14
 #define VENTPIN 25
@@ -53,7 +51,7 @@ void lightTimer()
     if (nowTime >= highHour && nowTime <= lowHour && lightLabel != true && lightState == "AUTO")
     {
       Serial.println("Turn ON auto");
-      digitalWrite(LEDTESTE, 0);
+      digitalWrite(LEDPIN, 0);
       lightLabel = true;
     }
 
@@ -61,20 +59,20 @@ void lightTimer()
     {
       lightLabel = false;
       Serial.println("Turn OFF auto");
-      digitalWrite(LEDTESTE, 1);
+      digitalWrite(LEDPIN, 1);
     }
 
     if (lightState == "ON" && lightLabel != true)
     {
       Serial.println("Turn ON manual");
-      digitalWrite(LEDTESTE, 0);
+      digitalWrite(LEDPIN, 0);
       lightLabel = true;
     }
 
     if (lightState == "OFF" && lightLabel != false)
     {
       Serial.println("Turn OFF manual");
-      digitalWrite(LEDTESTE, 1);
+      digitalWrite(LEDPIN, 1);
       lightLabel = false;
     }
   }
@@ -110,7 +108,7 @@ void showPayload(const char *payload, size_t length)
   Serial.println(payload);
 }
 
-void bootcheck(const char *payload, size_t length)
+void sendID(const char *payload, size_t length)
 {
   char jsonOutput[128];
   const size_t CAPACITY = JSON_OBJECT_SIZE(1);
@@ -118,20 +116,29 @@ void bootcheck(const char *payload, size_t length)
   JsonObject object = doc.to<JsonObject>();
   object["boardId"] = MAC_ID;
   serializeJson(doc, jsonOutput);
-
   webSocket.emit("bootcheck", jsonOutput);
+}
+
+void bootcheck(const char *payload, size_t length)
+{
 
   Serial.println(payload);
+  DynamicJsonDocument doc1(1024);
+  deserializeJson(doc1, payload);
+  String HighHour = doc1["highHour"];
+  String LowHour = doc1["lowHour"];
+  String LightState = doc1["lightState"];
+  ventState = doc1["ventState"];
+  outExaust = doc1["outExaust"];
+  inExaust = doc1["inExaust"];
+  highHour = HighHour;
+  lowHour = LowHour;
+  lightState = LightState;
 
-  // DynamicJsonDocument doc1(1024);
-  // deserializeJson(doc1, payload);
-  // highHour = doc1["highHour"];
-  // lowHour   = doc1["lowHour"];
-  // lightState   = doc1["lightState"];
-  // ventState    = doc1["ventState"];
-  // outExaust   = doc1["outExaust"];
-  // intExaust   = doc1["intExaust"];
-}
+  digitalWrite(VENTPIN, ventState);
+  digitalWrite(OUTEXPIN, outExaust);
+  digitalWrite(INEXPIN, inExaust);
+};
 
 void newTimeSetup(const char *payload, size_t length)
 {
@@ -150,28 +157,33 @@ void setLightOn(const char *payload, size_t length)
   lightState = "ON";
   digitalWrite(LEDPIN, 0);
   lightLabel = true;
+  Serial.println("on");
 }
 void setLightOff(const char *payload, size_t length)
 {
   lightState = "OFF";
   digitalWrite(LEDPIN, 1);
   lightLabel = false;
+  Serial.println("off");
 }
 void setLightAuto(const char *payload, size_t length)
 {
   lightState = "AUTO";
+  Serial.println("auto");
 }
 
 void changeVentState(const char *payload, size_t length)
 {
   ventState = !ventState;
   digitalWrite(VENTPIN, ventState);
+  Serial.println(ventState);
 }
 
 void changeInState(const char *payload, size_t length)
 {
   inExaust = !inExaust;
   digitalWrite(INEXPIN, inExaust);
+  Serial.println(inExaust);
 }
 void changeOutState(const char *payload, size_t length)
 {
@@ -184,7 +196,6 @@ void setup()
 {
   Serial.begin(9600);
 
-  pinMode(LEDTESTE, OUTPUT);
   pinMode(DHTPIN, INPUT);
   pinMode(LEDPIN, OUTPUT);
   pinMode(VENTPIN, OUTPUT);
@@ -217,7 +228,8 @@ void setup()
 
   webSocket.begin("192.168.0.12", 80);
 
-  webSocket.on("connect", bootcheck);
+  webSocket.on("connect", sendID);
+  webSocket.on("bootcheck", bootcheck);
   webSocket.on("message", showPayload);
   webSocket.on("newTimingSetup", newTimeSetup);
   webSocket.on("setLightOn", setLightOn);
