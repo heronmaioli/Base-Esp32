@@ -135,9 +135,9 @@ void bootcheck(const char *payload, size_t length)
   lowHour = LowHour;
   lightState = LightState;
 
-  digitalWrite(VENTPIN, ventState);
-  digitalWrite(OUTEXPIN, outExaust);
-  digitalWrite(INEXPIN, inExaust);
+  digitalWrite(VENTPIN, !ventState);
+  digitalWrite(OUTEXPIN, !outExaust);
+  digitalWrite(INEXPIN, !inExaust);
 };
 
 void newTimeSetup(const char *payload, size_t length)
@@ -175,20 +175,20 @@ void setLightAuto(const char *payload, size_t length)
 void changeVentState(const char *payload, size_t length)
 {
   ventState = !ventState;
-  digitalWrite(VENTPIN, ventState);
-  Serial.println(ventState);
+  digitalWrite(VENTPIN, !ventState);
+  Serial.println(!ventState);
 }
 
 void changeInState(const char *payload, size_t length)
 {
   inExaust = !inExaust;
-  digitalWrite(INEXPIN, inExaust);
-  Serial.println(inExaust);
+  digitalWrite(INEXPIN, !inExaust);
+  Serial.println(!inExaust);
 }
 void changeOutState(const char *payload, size_t length)
 {
   outExaust = !outExaust;
-  digitalWrite(OUTEXPIN, outExaust);
+  digitalWrite(OUTEXPIN, !outExaust);
 }
 
 void setup()
@@ -224,9 +224,9 @@ void setup()
 
   delay(500);
 
-  //  webSocket.begin("gentle-savannah-77998.herokuapp.com", 80);
+  webSocket.begin("gentle-savannah-77998.herokuapp.com", 80);
 
-  webSocket.begin("192.168.0.12", 80);
+  // webSocket.begin("192.168.0.12", 80);
 
   webSocket.on("connect", sendID);
   webSocket.on("bootcheck", bootcheck);
