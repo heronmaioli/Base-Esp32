@@ -35,8 +35,8 @@ boolean ventState = false;
 boolean inExaust = false;
 boolean outExaust = false;
 
-const char *ssid = "CLARO_=(_8^(1)";
-const char *password = "EFAFB9DA";
+const char *ssid = "";
+const char *password = "";
 
 void lightTimer()
 {
@@ -224,7 +224,7 @@ void setup()
 
   delay(500);
 
-  webSocket.begin("gentle-savannah-77998.herokuapp.com", 80);
+  webSocket.begin("", 80);
 
   // webSocket.begin("192.168.0.12", 80);
 
