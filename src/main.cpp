@@ -35,8 +35,8 @@ boolean ventState = false;
 boolean inExaust = false;
 boolean outExaust = false;
 
-const char *ssid = "";
-const char *password = "";
+const char *ssid = "CLARO_=(_8^(1)";
+const char *password = "EFAFB9DA";
 
 void lightTimer()
 {
