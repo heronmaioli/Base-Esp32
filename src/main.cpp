@@ -35,8 +35,8 @@ boolean ventState = false;
 boolean inExaust = false;
 boolean outExaust = false;
 
-const char *ssid = "CLARO_=(_8^(1)";
-const char *password = "EFAFB9DA";
+const char *ssid = "";
+const char *password = "";
 
 void lightTimer()
 {
@@ -225,12 +225,12 @@ void setup()
   delay(500);
 
   const char *url = "/socket.io/?transport=websocket&boardId=";
-  // webSocket.begin("gentle-savannah-77998.herokuapp.com", 80);
-  char result[100]; // array to hold the result.
+  char result[100];
   strcpy(result, url);
-  // copy string one into the result.
+
   strcat(result, MAC_ID);
 
+  // webSocket.begin("gentle-savannah-77998.herokuapp.com", 80, result);
   webSocket.begin("192.168.0.12", 80, result);
 
   webSocket.on("connect", sendID);
