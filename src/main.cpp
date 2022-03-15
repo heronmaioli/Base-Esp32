@@ -224,9 +224,14 @@ void setup()
 
   delay(500);
 
-  webSocket.begin("gentle-savannah-77998.herokuapp.com", 80);
+  const char *url = "/socket.io/?transport=websocket&boardId=";
+  // webSocket.begin("gentle-savannah-77998.herokuapp.com", 80);
+  char result[100]; // array to hold the result.
+  strcpy(result, url);
+  // copy string one into the result.
+  strcat(result, MAC_ID);
 
-  // webSocket.begin("192.168.0.12", 80);
+  webSocket.begin("192.168.0.12", 80, result);
 
   webSocket.on("connect", sendID);
   webSocket.on("bootcheck", bootcheck);
@@ -247,5 +252,5 @@ void loop()
   readSensors();
   webSocket.loop();
   currentMillis = millis();
-  delay(500);
+  delay(10);
 }
