@@ -227,7 +227,6 @@ void setup()
   const char *url = "/socket.io/?transport=websocket&boardId=";
   char result[100];
   strcpy(result, url);
-
   strcat(result, MAC_ID);
 
   // webSocket.begin("gentle-savannah-77998.herokuapp.com", 80, result);
