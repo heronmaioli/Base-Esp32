@@ -229,8 +229,8 @@ void setup()
   strcpy(result, url);
   strcat(result, MAC_ID);
 
-  // webSocket.begin("gentle-savannah-77998.herokuapp.com", 80, result);
-  webSocket.begin("192.168.0.12", 80, result);
+ 
+  webSocket.begin("", 80, result);
 
   webSocket.on("connect", sendID);
   webSocket.on("bootcheck", bootcheck);
