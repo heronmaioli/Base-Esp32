@@ -1,11 +1,11 @@
-# Base-Esp32-with-Node
-🤖 The ESP32 firmware to Nectah Grow app.
+# Base-Esp32
+🤖  IOT Project - Smart garden microcontroler firmware
 
 
 ### Description
 
-Connected to the [main server](https://github.com/heronmaioli/node-js-socket-io), this firmware are able to send and receive events through websocket protocol,
-using socket io as the manager lib to handle with.
+Connected to the [main server](https://github.com/heronmaioli/node-js-socket-io), this firmware is able to send and receive events through websocket protocol,
+using socket io as the manager lib to handle with 
 
 
 ### Features
@@ -14,4 +14,4 @@ using socket io as the manager lib to handle with.
 - Connect to NTP server to sync time on clock
 - Send and receive data as JSON
 - Read and transmit from a DHT sensor
-- Change solid relay status through the app commands
+- Change solid relay status through the [app](https://github.com/heronmaioli/expo-NectahGrow) commands
