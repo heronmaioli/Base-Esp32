@@ -8,6 +8,13 @@ Connected to the [main server](https://github.com/heronmaioli/node-js-socket-io)
 using socket io as the manager lib to handle with 
 
 
+
+### Missing Features
+
+- Save the status of the pins on the flash memory
+- Watchdog protocol
+
+
 ### Features
 
 - Check if the hardware number is already registered in the server
