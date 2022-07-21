@@ -13,6 +13,8 @@ using socket io as the manager lib to handle with
 
 - Save the status of the pins on the flash memory
 - Watchdog protocol
+- Wifi configuration via bluetooth
+- Future new features
 
 
 ### Features
